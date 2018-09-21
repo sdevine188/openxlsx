@@ -2,6 +2,7 @@ library(tidyverse)
 library(openxlsx)
 library(viridis)
 library(scales)
+library(rlang)
 
 # https://cran.r-project.org/web/packages/openxlsx/vignettes/
 # https://cran.r-project.org/web/packages/openxlsx/vignettes/Introduction.pdf
@@ -57,6 +58,81 @@ saveWorkbook(wb, file = "Date Formatting.xlsx", overwrite = TRUE)
 
 
 #############################################################################
+
+
+# merge cells
+
+## Create a new workbook
+wb <- createWorkbook()
+
+## Add a worksheet
+addWorksheet(wb, "Sheet 1")
+addWorksheet(wb, "Sheet 2")
+
+# add data
+writeData(wb, sheet = "Sheet 1", x = iris)
+
+# add a row of data - note that writeData overwrites existing data
+new_row <- map_dfc(.x = names(iris), .f = function(.x) {var_name_sym <- sym(.x)
+                                                        tibble(!!var_name_sym := .x)})
+new_row
+writeData(wb, sheet = "Sheet 1", x = new_row, startCol = 1, startRow = 2, colNames = FALSE)
+
+## Merge cells to make second header - note that the upper-left-most cell value is retained for new merged cell
+mergeCells(wb, "Sheet 1", cols = 1:2, rows = 1)
+mergeCells(wb, "Sheet 1", cols = 3:4, rows = 1)
+writeData(wb, "Sheet 1", x = tibble(v1 = "Sepal", v2 = NA, v3 = "Petal"),
+          startCol = 1, startRow = 1, colNames = FALSE)
+
+## remove merged cells
+removeCellMerge(wb, "Sheet 1", cols = 1:4, rows = 1) # removes any intersecting merges
+
+
+##########
+
+
+# open a temporary version of workbook in excel
+openXL(wb)
+
+# save workbook
+saveWorkbook(wb, file = "merge_cell_example.xlsx", overwrite = TRUE)
+
+
+#############################################################################3
+
+
+# headers and footers
+
+## Create a new workbook
+wb <- createWorkbook()
+
+## Add a worksheet
+addWorksheet(wb, "Sheet 1")
+
+# add data
+writeData(wb, sheet = "Sheet 1", x = head(iris))
+
+# headers and footers
+setHeaderFooter(wb, sheet = "Sheet 1",  
+                header = c("ODD HEAD LEFT", "ODD HEAD CENTER", "ODD HEAD RIGHT"),
+                footer = c("ODD FOOT RIGHT", "ODD FOOT CENTER", "ODD FOOT RIGHT"),
+                evenHeader = c("EVEN HEAD LEFT", "EVEN HEAD CENTER", "EVEN HEAD RIGHT"),
+                evenFooter = c("EVEN FOOT RIGHT", "EVEN FOOT CENTER", "EVEN FOOT RIGHT"),
+                firstHeader = c("TOP", "OF FIRST", "PAGE"),
+                firstFooter = c("BOTTOM", "OF FIRST", "PAGE"))
+
+
+##########
+
+
+# open a temporary version of workbook in excel
+openXL(wb)
+
+# save workbook
+saveWorkbook(wb, file = "headers_and_footers_example.xlsx", overwrite = TRUE)
+
+
+##############################################################################
 
 
 # formatting
