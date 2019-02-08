@@ -11,6 +11,18 @@ library(rlang)
 # setwd
 setwd("C:/Users/Stephen/Desktop/R/openxlsx")
 
+# save data as xlsx
+starwars %>% write.xlsx(file = "starwars_dataframe.xlsx", asTable = FALSE)
+starwars %>% write.xlsx(file = "starwars_dataframe_as_table.xlsx", asTable = TRUE)
+
+# save multiple dataframes to xlsx with sheet names
+sheet_names_and_data_list <- list("starwars_sheet" = starwars, "iris_sheet" = iris)
+write.xlsx(x = sheet_names_and_data_list, file = "starwars_and_iris.xlsx", asTable = FALSE)
+
+
+###############################################################
+
+
 # create basic workbook
 wb <- createWorkbook()
 addWorksheet(wb, sheetName = "starwars")
