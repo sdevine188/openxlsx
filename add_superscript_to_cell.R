@@ -1,7 +1,7 @@
-# # load add_superscript_to_cell function
+# # load add_super_script_to_cell function
 # current_wd <- getwd()
 # setwd("H:/R/openxlsx")
-# source("add_superscript_to_cell.R")
+# source("add_super_script_to_cell.R")
 # setwd(current_wd)
 
 
@@ -12,7 +12,7 @@ library(stringr)
 # https://github.com/awalker89/openxlsx/issues/407
 # https://cran.r-project.org/web/packages/openxlsx/vignettes/Introduction.pdf
 
-# create add_super_script_to_cell function
+# create add_superscript_to_cell function
 add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript_text, position = nchar(text), is_superscript = TRUE,
                                      size = 11, color = "#000000", font = "Calibri", font_family = 1, bold = FALSE, italic = FALSE, underlined = FALSE) {
         
@@ -66,8 +66,9 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
         } else {prop_vertical_align <- '<vertAlign val=\"subscript\"/>'}
 
         # get prop_text and prop_superscript_text
-        prop_text <- str_c(pr_size, pr_color, pr_font, pr_font_family, pr_bold, pr_italic, pr_underlined, sep = "")
-        prop_superscript_text <- str_c(pr_vertical_align, pr_size, pr_color, pr_font, pr_font_family, pr_bold, pr_italic, pr_underlined, sep = "")
+        prop_text <- str_c(prop_size, prop_color, prop_font, prop_font_family, prop_bold, prop_italic, prop_underlined, sep = "")
+        prop_superscript_text <- str_c(prop_vertical_align, prop_size, prop_color, prop_font, 
+                                       prop_font_family, prop_bold, prop_italic, prop_underlined, sep = "")
         
         
         ##############
@@ -81,7 +82,7 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
                                    '</t></r><r><rPr>',
                                    prop_superscript_text,
                                    '</rPr><t xml:space="preserve">',
-                                   superScriptText,
+                                   superscript_text,
                                    '</t></r><r><rPr>',
                                    prop_text,
                                    '</rPr><t xml:space="preserve">',
@@ -97,7 +98,7 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
 ##################################################################################
 
 
-# # test
+# test
 # workbook <- createWorkbook()
 # addWorksheet(wb = workbook, sheet = "superscript_test")
 # writeData(wb = workbook, sheet = "superscript_test", x = tibble(var1 = c(1, 2, 3), var2 = c("red", "blue", "green")))
@@ -108,10 +109,10 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
 # text <- "green_w_superscript"
 # is_superscript <- TRUE
 # superscript_text <- "a"
-# size = 9
+# size = 11
 # color = "#000000"
 # font = "Calibri"
-# font_family = 2
+# font_family = 1
 # bold = FALSE
 # italic = FALSE
 # underlined = FALSE
@@ -124,7 +125,7 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
 # # so the best i can do is text = " text here" with a leading space, and then use position = 1
 # add_superscript_to_cell(workbook = workbook, sheet = "superscript_test", row = row, col = col, text = text,
 #                          superscript_text = superscript_text, position = position, is_superscript = is_superscript,
-#                          size = size, color = color, font = font, font_family = font_family, bold = bold, 
+#                          size = size, color = color, font = font, font_family = font_family, bold = bold,
 #                          italic = italic, underlined = underlined)
 # 
 # workbook
