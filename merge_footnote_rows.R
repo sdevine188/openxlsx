@@ -90,7 +90,7 @@ merge_footnote_rows <- function(current_row, workbook, sheet, table, list_of_pre
 # # list_of_preceding_footnotes <- list_of_preceding_footnotes_for_footnote_3
 # # current_row <- 1
 # 
-# # call merge_footnote_rows for test_table_footnote_1
+# # merge title
 # mergeCells(wb = workbook, sheet = sheet, cols = 1:(table %>% ncol()), rows = 1)
 # # removeCellMerge(wb = workbook, sheet = sheet, cols = 1:(test_table %>% ncol()), rows = 1)
 # 

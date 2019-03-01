@@ -24,7 +24,7 @@ setwd("H:/R/openxlsx")
 
 
 # create test_table
-test_table <- starwars %>% select(name, species, homeworld) %>% head()
+test_table <- starwars %>% select(name, species, mass, height) %>% head()
 test_table
 
 # create test_table_title
@@ -53,12 +53,12 @@ list_of_all_footnotes
 
 
 # create title_style
-title_style <- createStyle(fontName = "Calibri", fontSize = 14, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
-                            border = c("Top", "Bottom", "Left", "Right"),
-                            borderColour = "#000000",
-                            borderStyle = c("thin", "thin", "thin", "thin"),
-                            halign = "left", valign = "center", textDecoration = "Bold",
-                            wrapText = TRUE)
+title_style <- createStyle(fontName = "Calibri", fontSize = 13, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
+                           border = NULL,
+                           borderColour = NULL,
+                           borderStyle = NULL,
+                           halign = "left", valign = "center", textDecoration = "Bold",
+                           wrapText = TRUE)
 
 
 # create header_style
@@ -69,13 +69,29 @@ header_style <- createStyle(fontName = "Calibri", fontSize = 11, fontColour = "#
                             halign = "center", valign = "center", textDecoration = "Bold",
                             wrapText = TRUE)
 
-# create body_style
-body_style <- createStyle(fontName = "Calibri", fontSize = 11, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
+# create body_style if you want all body to be styled the same way, but probably better to use body_string_style and body_numeric_style
+# body_style <- createStyle(fontName = "Calibri", fontSize = 11, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
+#                           border = c("Top", "Bottom", "Left", "Right"),
+#                           borderColour = "#000000",
+#                           borderStyle = c("thin", "thin", "thin", "thin"),
+#                           halign = "center", valign = "center", textDecoration = NULL,
+#                           wrapText = TRUE)
+
+# create body_string_style
+body_string_style <- createStyle(fontName = "Calibri", fontSize = 11, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
                           border = c("Top", "Bottom", "Left", "Right"),
                           borderColour = "#000000",
                           borderStyle = c("thin", "thin", "thin", "thin"),
-                          halign = "center", valign = "center", textDecoration = NULL,
+                          halign = "left", valign = "center", textDecoration = NULL,
                           wrapText = TRUE)
+
+# create body_numeric_style
+body_numeric_style <- createStyle(fontName = "Calibri", fontSize = 11, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
+                                 border = c("Top", "Bottom", "Left", "Right"),
+                                 borderColour = "#000000",
+                                 borderStyle = c("thin", "thin", "thin", "thin"),
+                                 halign = "right", valign = "center", textDecoration = NULL,
+                                 wrapText = TRUE)
 
 # create footnote_style
 footnote_1_style <- createStyle(fontName = "Calibri", fontSize = 9, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
@@ -113,7 +129,7 @@ writeData(wb = workbook, sheet = sheet, x = test_table_title,
           borders = "all", borderStyle = "thin", startRow = 1, startCol = 1)
 
 # add test_table
-writeData(wb = workbook, sheet = sheet, x = test_table, headerStyle = header_style,
+writeData(wb = workbook, sheet = sheet, x = test_table, headerStyle = NULL,
           borders = "all", borderStyle = "thin", startRow = 2, startCol = 1)
 
 # add test_table_footnote_1
@@ -137,7 +153,7 @@ writeData(wb = workbook, sheet = sheet, x = test_table_footnote_3 %>% rename(" "
 
 # merge title and footnotes
 
-# call merge_footnote_rows for test_table_footnote_1
+# merge title
 mergeCells(wb = workbook, sheet = sheet, cols = 1:(test_table %>% ncol()), rows = 1)
 # removeCellMerge(wb = workbook, sheet = sheet, cols = 1:(test_table %>% ncol()), rows = 1)
 
@@ -173,18 +189,33 @@ add_superscript_to_cell(workbook = workbook, sheet = sheet, row = test_table %>%
 
 # add title_style
 addStyle(wb = workbook, sheet = sheet, style = title_style, 
-         rows = 1, 
-         cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
+         rows = 1, cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
 
 # add header_style
 addStyle(wb = workbook, sheet = sheet, style = header_style, 
          rows = 2, 
          cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
 
-# add body_style
-addStyle(wb = workbook, sheet = sheet, style = body_style, 
+# add body_style 
+# addStyle(wb = workbook, sheet = sheet, style = body_style, 
+#          rows = seq(from = 3, to = test_table %>% nrow() + 2, by = 1), 
+#          cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
+
+# add body_string_style
+body_string_vars <- test_table %>% select_if(.predicate = is.character) %>% names()
+body_string_col_index <- test_table %>% names() %>% as_tibble() %>% mutate(row_number = row_number()) %>% 
+        filter(value == body_string_vars) %>% pull(row_number)
+addStyle(wb = workbook, sheet = sheet, style = body_string_style, 
          rows = seq(from = 3, to = test_table %>% nrow() + 2, by = 1), 
-         cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
+         cols = body_string_col_index, gridExpand = TRUE)
+
+# add body_numeric_style
+body_numeric_vars <- test_table %>% select_if(.predicate = is.numeric) %>% names()
+body_numeric_col_index <- test_table %>% names() %>% as_tibble() %>% mutate(row_number = row_number()) %>% 
+        filter(value == body_numeric_vars) %>% pull(row_number)
+addStyle(wb = workbook, sheet = sheet, style = body_numeric_style, 
+         rows = seq(from = 3, to = test_table %>% nrow() + 2, by = 1), 
+         cols = body_numeric_col_index, gridExpand = TRUE)
 
 # add footnote_style to all footnotes 
 # addStyle(wb = workbook, sheet = sheet, style = footnote_1_style, 
@@ -240,7 +271,8 @@ setRowHeights(wb = workbook, sheet = sheet, rows = 18, heights = 30)
 setRowHeights(wb = workbook, sheet = sheet, rows = 21, heights = 30)
 
 # set col width
-setColWidths(wb = workbook, sheet = sheet, cols = c(1, 2, 3), widths = c(25, 25, 25))
+setColWidths(wb = workbook, sheet = sheet, cols = seq(from = 1, to = test_table %>% ncol(), by = 1), 
+             widths = rep(25, times = test_table %>% ncol()))
 
 
 ################
