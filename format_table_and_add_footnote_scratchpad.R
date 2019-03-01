@@ -27,6 +27,9 @@ setwd("H:/R/openxlsx")
 test_table <- starwars %>% select(name, species, homeworld) %>% head()
 test_table
 
+# create test_table_title
+test_table_title <- "This is the title of the starwars table"
+
 # create footnotes
 test_table_footnote_1 <- tibble(footnote_text = c("this is the first row of footnote 1", "", "this is the third row of footnote 1 after skipping a line", "",
                                            str_c("this is long part of footnote 1: dddddddddddddddddddddddddddddddddddddddddddddddddddddd",
@@ -44,6 +47,19 @@ test_table_footnote_3
 # get list_of_all_footnotes
 list_of_all_footnotes <- c(test_table_footnote_1, test_table_footnote_2, test_table_footnote_3) 
 list_of_all_footnotes
+
+
+################
+
+
+# create title_style
+title_style <- createStyle(fontName = "Calibri", fontSize = 14, fontColour = "#000000", fgFill = "#ffffff", numFmt = "GENERAL",
+                            border = c("Top", "Bottom", "Left", "Right"),
+                            borderColour = "#000000",
+                            borderStyle = c("thin", "thin", "thin", "thin"),
+                            halign = "left", valign = "center", textDecoration = "Bold",
+                            wrapText = TRUE)
+
 
 # create header_style
 header_style <- createStyle(fontName = "Calibri", fontSize = 11, fontColour = "#ffffff", fgFill = "#003399", numFmt = "GENERAL",
@@ -83,41 +99,47 @@ footnote_3_style <- createStyle(fontName = "Calibri", fontSize = 9, fontColour =
                               halign = "left", valign = "center", textDecoration = "bold",
                               wrapText = TRUE)
 
+
+###########
+
+
 # create workbook
 workbook <- createWorkbook()
 sheet <- "test_sheet"
 addWorksheet(wb = workbook, sheet = sheet)
 
-
-##############
-
+# add test_table_title
+writeData(wb = workbook, sheet = sheet, x = test_table_title, 
+          borders = "all", borderStyle = "thin", startRow = 1, startCol = 1)
 
 # add test_table
 writeData(wb = workbook, sheet = sheet, x = test_table, headerStyle = header_style,
-          borders = "all", borderStyle = "thin")
-
-
-################
-
+          borders = "all", borderStyle = "thin", startRow = 2, startCol = 1)
 
 # add test_table_footnote_1
 writeData(wb = workbook, sheet = sheet, x = test_table_footnote_1 %>% rename(" " = footnote_text), 
-          startRow = test_table %>% nrow() + 2, startCol = 1)
+          startRow = test_table %>% nrow() + 3, startCol = 1)
 
 # add test_table_footnote_2
 writeData(wb = workbook, sheet = sheet, x = test_table_footnote_2 %>% rename(" " = footnote_text), 
-          startRow = test_table %>% nrow() + 2 + (test_table_footnote_1 %>% nrow()) + 1, startCol = 1)
+          startRow = test_table %>% nrow() + 3 + (test_table_footnote_1 %>% nrow()) + 1, startCol = 1)
 
 # add test_table_footnote_3
 writeData(wb = workbook, sheet = sheet, x = test_table_footnote_3 %>% rename(" " = footnote_text), 
-          startRow = test_table %>% nrow() + 2 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()) + 1, startCol = 1)
+          startRow = test_table %>% nrow() + 3 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()) + 1, startCol = 1)
 
 # inspect workbook
-openXL(workbook)
+# openXL(workbook)
 
 
 ###############
 
+
+# merge title and footnotes
+
+# call merge_footnote_rows for test_table_footnote_1
+mergeCells(wb = workbook, sheet = sheet, cols = 1:(test_table %>% ncol()), rows = 1)
+# removeCellMerge(wb = workbook, sheet = sheet, cols = 1:(test_table %>% ncol()), rows = 1)
 
 # call merge_footnote_rows for test_table_footnote_1
 map(.x = seq(from = 1, to = test_table_footnote_1 %>% nrow() + 1, by = 1),
@@ -139,7 +161,7 @@ map(.x = seq(from = 1, to = test_table_footnote_3 %>% nrow() + 1, by = 1),
 
 
 # add superscripts
-add_superscript_to_cell(workbook = workbook, sheet = sheet, row = test_table %>% nrow() + 3, 
+add_superscript_to_cell(workbook = workbook, sheet = sheet, row = test_table %>% nrow() + 4, 
                          col = 1, text = " test_superscript",
                          superscript_text = "(a) ", position = 1, is_superscript = TRUE,
                          size = 9, color = "#000000", font = "Calibri", font_family = 1, bold = FALSE, 
@@ -149,9 +171,19 @@ add_superscript_to_cell(workbook = workbook, sheet = sheet, row = test_table %>%
 ################
 
 
+# add title_style
+addStyle(wb = workbook, sheet = sheet, style = title_style, 
+         rows = 1, 
+         cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
+
+# add header_style
+addStyle(wb = workbook, sheet = sheet, style = header_style, 
+         rows = 2, 
+         cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
+
 # add body_style
 addStyle(wb = workbook, sheet = sheet, style = body_style, 
-         rows = seq(from = 2, to = test_table %>% nrow() + 1, by = 1), 
+         rows = seq(from = 3, to = test_table %>% nrow() + 2, by = 1), 
          cols = seq(from = 1, to = test_table %>% ncol(), by = 1), gridExpand = TRUE)
 
 # add footnote_style to all footnotes 
@@ -165,22 +197,22 @@ addStyle(wb = workbook, sheet = sheet, style = body_style,
 
 # add custom footnote_1_style
 addStyle(wb = workbook, sheet = sheet, style = footnote_1_style, 
-         rows = seq(from = test_table %>% nrow() + 1 + 1, 
-                    to = test_table %>% nrow() + 1 + 1 + (test_table_footnote_1 %>% nrow()), by = 1), 
+         rows = seq(from = test_table %>% nrow() + 3, 
+                    to = test_table %>% nrow() + 3 + (test_table_footnote_1 %>% nrow()), by = 1), 
          cols = seq(from = 1, to = test_table %>% ncol(), by = 1),
          gridExpand = TRUE)
 
 # add custom footnote_2_style
 addStyle(wb = workbook, sheet = sheet, style = footnote_2_style, 
-         rows = seq(from = test_table %>% nrow() + 1 + 1 + (test_table_footnote_1 %>% nrow()) + 1, 
-                    to = test_table %>% nrow() + 1 + 1 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()), by = 1), 
+         rows = seq(from = test_table %>% nrow() + 3 + (test_table_footnote_1 %>% nrow()) + 1, 
+                    to = test_table %>% nrow() + 3 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()), by = 1), 
          cols = seq(from = 1, to = test_table %>% ncol(), by = 1),
          gridExpand = TRUE)
 
 # add custom footnote_3_style
 addStyle(wb = workbook, sheet = sheet, style = footnote_3_style, 
-         rows = seq(from = test_table %>% nrow() + 1 + 1 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()) + 1, 
-                    to = test_table %>% nrow() + 1 + 1 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()) + 1 +
+         rows = seq(from = test_table %>% nrow() + 3 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()) + 1, 
+                    to = test_table %>% nrow() + 3 + (test_table_footnote_1 %>% nrow()) + 1 + (test_table_footnote_2 %>% nrow()) + 1 +
                             (test_table_footnote_3 %>% nrow()), by = 1), 
          cols = seq(from = 1, to = test_table %>% ncol(), by = 1),
          gridExpand = TRUE)
@@ -189,20 +221,23 @@ addStyle(wb = workbook, sheet = sheet, style = footnote_3_style,
 #################
 
 
+# set row heights for title manually
+setRowHeights(wb = workbook, sheet = sheet, rows = 1, heights = 20)
+
 # set row heights for header manually
-setRowHeights(wb = workbook, sheet = sheet, rows = 1, heights = 60)
+setRowHeights(wb = workbook, sheet = sheet, rows = 2, heights = 60)
 
 # set row heights for all non-header table rows and for all footnote rows at 15
-setRowHeights(wb = workbook, sheet = sheet, rows = seq(from = 2, to = test_table %>% nrow() + 1 + 
+setRowHeights(wb = workbook, sheet = sheet, rows = seq(from = 3, to = test_table %>% nrow() + 1 + 
                                (list_of_all_footnotes %>% enframe() %>% select(value) %>% unnest() %>% nrow()) + 
                                (1 * length(list_of_all_footnotes))), heights = 15)
 
 
 # set row heights for individual text_wrapped cells manually
-setRowHeights(wb = workbook, sheet = sheet, rows = 11, heights = 30)
-setRowHeights(wb = workbook, sheet = sheet, rows = 13, heights = 70)
-setRowHeights(wb = workbook, sheet = sheet, rows = 17, heights = 30)
-setRowHeights(wb = workbook, sheet = sheet, rows = 20, heights = 30)
+setRowHeights(wb = workbook, sheet = sheet, rows = 12, heights = 30)
+setRowHeights(wb = workbook, sheet = sheet, rows = 14, heights = 70)
+setRowHeights(wb = workbook, sheet = sheet, rows = 18, heights = 30)
+setRowHeights(wb = workbook, sheet = sheet, rows = 21, heights = 30)
 
 # set col width
 setColWidths(wb = workbook, sheet = sheet, cols = c(1, 2, 3), widths = c(25, 25, 25))
