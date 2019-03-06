@@ -13,7 +13,7 @@ library(stringr)
 # https://cran.r-project.org/web/packages/openxlsx/vignettes/Introduction.pdf
 
 # create add_superscript_to_cell function
-add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript_text, position = nchar(text), is_superscript = TRUE,
+add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript_text, position, is_superscript = TRUE,
                                      size = 11, color = "#000000", font = "Calibri", font_family = 1, bold = FALSE, italic = FALSE, underlined = FALSE) {
         
         # create placeholder_text
@@ -23,7 +23,8 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
         writeData(wb = workbook, sheet = sheet, x = placeholder_text, startRow = row, startCol = col)
         
         # find the workbook$sharedstring that you want to update
-        shared_string_to_update <- workbook$sharedStrings %>% enframe() %>% unnest() %>%
+        shared_string_to_update <- workbook$sharedStrings %>% enframe() %>% 
+                # unnest() %>%
                 filter(str_detect(string = value, pattern = placeholder_text)) %>% pull(name)
         
         # get pre_text before superscript
