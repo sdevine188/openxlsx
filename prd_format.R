@@ -240,7 +240,7 @@ prd_format <- function(workbook, tables, output_sheet_names = NULL, text_cols = 
                         # get organic_wrapped_lines_required based on best_header_col_width, excluding newline characters
                         organic_wrapped_lines_required <- best_header_col_width %>% 
                                 pull(var_name) %>% str_split(string = ., pattern = "\n") %>%
-                                map2_dfr(.x = ., .y = best_header_col_width %>% filter(str_detect(string = var_name, pattern = "\n")) %>% pull(overall_best_col_width),
+                                map2_dfr(.x = ., .y = best_header_col_width %>% pull(overall_best_col_width),
                                          .f = ~ tibble(var_name_segments_btw_newlines = .x) %>% 
                                                  mutate(overall_best_col_width = .y,
                                                         overall_best_col_width_minus_padding = overall_best_col_width - (2 * col_width_padding), 
@@ -254,7 +254,7 @@ prd_format <- function(workbook, tables, output_sheet_names = NULL, text_cols = 
                         # and includes a fixed 5 pt padding on both top and bottom of header row
                         best_header_height <- body_col_width_tbl %>% bind_cols(., organic_wrapped_lines_required) %>% 
                                 mutate(newline_character_count = str_count(string = var_name, pattern = "\n"),
-                                       total_wrapped_lines_required = newline_character_count + organic_wrapped_lines_required_sum) %>%
+                                       total_wrapped_lines_required = newline_character_count + 1 + organic_wrapped_lines_required_sum) %>%
                                 filter(total_wrapped_lines_required == max(total_wrapped_lines_required)) %>%
                                 mutate(best_header_height = ((total_wrapped_lines_required * 15) + 10)) %>% distinct(best_header_height) %>%
                                 pull(best_header_height)

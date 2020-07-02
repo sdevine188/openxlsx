@@ -11,10 +11,10 @@ library(stringr)
 
 # https://github.com/awalker89/openxlsx/issues/407
 # https://cran.r-project.org/web/packages/openxlsx/vignettes/Introduction.pdf
+# https://stackoverflow.com/questions/40234742/superscript-from-r-to-excel-table
 
 # create add_superscript_to_cell function
-add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript_text, position, is_superscript = TRUE,
-                                     size = 11, color = "#000000", font = "Calibri", font_family = 1, bold = FALSE, italic = FALSE, underlined = FALSE) {
+add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript_text, superscript_position) {
         
         # create placeholder_text
         placeholder_text <- 'This is placeholder text that should not appear anywhere in your document.'
@@ -23,73 +23,112 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
         writeData(wb = workbook, sheet = sheet, x = placeholder_text, startRow = row, startCol = col)
         
         # find the workbook$sharedstring that you want to update
-        shared_string_to_update <- workbook$sharedStrings %>% enframe() %>% 
-                # unnest() %>%
+        shared_string_to_update <- workbook$sharedStrings %>% enframe() %>% unnest(value) %>%
                 filter(str_detect(string = value, pattern = placeholder_text)) %>% pull(name)
         
         # get pre_text before superscript
-        pre_text <- str_sub(string = text, start = 1, end = position) 
+        # note that blanks must be replaced with a space, because blanks will cause error when compiling into xml
+        pre_text <- str_sub(string = text, start = 1, end = superscript_position - 1) 
+        pre_text <- ifelse(pre_text == "", " ", pre_text)
         
         # get post_text after superscript
-        post_text <- str_sub(string = text, start = position + 1, end = nchar(text)) 
+        # note that blanks must be replaced with a space, because blanks will cause error when compiling into xml
+        post_text <- str_sub(string = text, start = superscript_position, end = nchar(text)) 
+        post_text <- ifelse(post_text == "", " ", post_text)
         
         
         #############
         
         
-        # handle properties formatting; note "rPR" is a formatting tag that excel reads
-        prop_size <- paste('<sz val =\"',size,'\"/>',
-                       sep = '')
+        # create get_style_tbl function
+        get_style_tbl <- function(current_style_object, current_style_index) {
+                
+                # get style info
+                font_color <- ifelse(is.null(current_style_object$style$fontColour$rgb), NA, current_style_object$style$fontColour$rgb)
+                font_name <- ifelse(is.null(current_style_object$style$fontName$val), NA, current_style_object$style$fontName$val)
+                font_size <- ifelse(is.null(current_style_object$style$fontSize$val), NA, current_style_object$style$fontSize$val)
+                text_decoration <- ifelse(is.null(current_style_object$style$fontDecoration), NA, current_style_object$style$fontDecoration)
+                text_decoration <- ifelse(length(text_decoration) > 1, 
+                                          str_c(text_decoration, collapse = ", "), text_decoration)
+                sheet <- current_style_object$sheet
+                rows <- current_style_object$rows
+                cols <- current_style_object$cols
+                
+                # get and return current_style_object_tbl
+                current_style_object_tbl <- tibble(style_index = rep(current_style_index, times = length(rows)), 
+                                                style_sheet = rep(sheet, times = length(rows)), style_row = rows, style_col = cols, 
+                                                   font_color = rep(font_color, times = length(rows)), 
+                                                   font_name = rep(font_name, times = length(rows)), 
+                                                   font_size = rep(font_size, times = length(rows)),
+                                                text_decoration = rep(text_decoration, times = length(rows))) %>%
+                        mutate(text_decoration = case_when(text_decoration == "BOLD" ~ "<b/>",
+                                                           text_decoration == "ITALIC" ~ "<i/>",
+                                                           str_detect(string = text_decoration, pattern = "BOLD") & 
+                                                                   str_detect(string = text_decoration, pattern = "ITALIC") ~ "<b/><i/>",
+                                                           TRUE ~ text_decoration))
+                return(current_style_object_tbl)                                   
+        }
         
-        prop_color <- paste('<color rgb =\"',color,'\"/>',
-                       sep = '')
+        # get style_tbl
+        style_tbl <- map2(.x = workbook$styleObjects, .y = 1:length(workbook$styleObjects), 
+             .f = ~ get_style_tbl(current_style_object = .x, current_style_index = .y)) %>%
+                bind_rows()
         
-        prop_font <- paste('<rFont val =\"',font,'\"/>',
-                       sep = '')
-        
-        prop_font_family <- paste('<family val =\"', font_family,'\"/>',
-                       sep = '')
-        
-        if(bold){
-                prop_bold <- '<b/>'
-        } else {prop_bold <- ''}
-        
-        if(italic){
-                prop_italic <- '<i/>'
-        } else {prop_italic <- ''}
-        
-        if(underlined){
-                prop_underlined <- '<u/>'
-        } else {prop_underlined <- ''}
-        
-        if(is_superscript){
-                prop_vertical_align <- '<vertAlign val=\"superscript\"/>'
-        } else {prop_vertical_align <- '<vertAlign val=\"subscript\"/>'}
-
-        # get prop_text and prop_superscript_text
-        prop_text <- str_c(prop_size, prop_color, prop_font, prop_font_family, prop_bold, prop_italic, prop_underlined, sep = "")
-        prop_superscript_text <- str_c(prop_vertical_align, prop_size, prop_color, prop_font, 
-                                       prop_font_family, prop_bold, prop_italic, prop_underlined, sep = "")
-        
+        # get target_cell_style_tbl, filtering down style_tbl to current row/col targeted for superscript, and creating xml property strings
+        target_cell_style_tbl <- style_tbl %>% filter(style_sheet == sheet, style_row == row, style_col == col) %>%
+                arrange(desc(style_index)) %>% slice(1) %>% 
+                mutate(font_color = case_when(is.na(font_color) ~ "", !is.na(font_color) ~ str_c('<color rgb =\"', font_color, '\"/>')),
+                       font_name = case_when(is.na(font_name) ~ "", !is.na(font_name) ~ str_c('<rFont val =\"', font_name, '\"/>')),
+                       font_size = case_when(is.na(font_size) ~ "", !is.na(font_size) ~ str_c('<sz val=\"', font_size, '\"/>')),
+                       text_decoration = case_when(is.na(text_decoration) ~ "", TRUE ~ text_decoration))
+  
         
         ##############
+
         
-        
-        # create new_shared_string
-        new_shared_string <- str_c('<si><r><rPr>',
-                                   prop_text,
-                                   '</rPr><t xml:space="preserve">',
+        new_shared_string <- str_c('<si>',
+                                   
+                                   # handle pre-text
+                                   '<r>',
+                                   '<rPr>',
+                                   target_cell_style_tbl %>% pull(text_decoration),
+                                   target_cell_style_tbl %>% pull(font_size),
+                                   target_cell_style_tbl %>% pull(font_color),
+                                   target_cell_style_tbl %>% pull(font_name),
+                                   '</rPr>',
+                                   '<t xml:space="preserve">',
                                    pre_text,
-                                   '</t></r><r><rPr>',
-                                   prop_superscript_text,
-                                   '</rPr><t xml:space="preserve">',
+                                   '</t>',
+                                   '</r>',
+                                   
+                                   # handle superscript_text
+                                   '<r>',
+                                   '<rPr>',
+                                   '<vertAlign val=\"superscript\"/>',
+                                   target_cell_style_tbl %>% pull(text_decoration),
+                                   target_cell_style_tbl %>% pull(font_size),
+                                   target_cell_style_tbl %>% pull(font_color),
+                                   target_cell_style_tbl %>% pull(font_name),
+                                   '</rPr>',
+                                   '<t xml:space="preserve">',
                                    superscript_text,
-                                   '</t></r><r><rPr>',
-                                   prop_text,
-                                   '</rPr><t xml:space="preserve">',
+                                   '</t>',
+                                   '</r>',
+                                   
+                                   # handle post-text
+                                   '<r>',
+                                   '<rPr>',
+                                   target_cell_style_tbl %>% pull(text_decoration),
+                                   target_cell_style_tbl %>% pull(font_size),
+                                   target_cell_style_tbl %>% pull(font_color),
+                                   target_cell_style_tbl %>% pull(font_name),
+                                   '</rPr>',
+                                   '<t xml:space="preserve">',
                                    post_text,
-                                   '</t></r></si>',
-                                   sep = '')
+                                   '</t>',
+                                   '</r>',
+                                   '</si>',
+                                   sep = "")
         
         # update sharedStrings with new_shared_string
         workbook$sharedStrings[shared_string_to_update] <- new_shared_string
@@ -99,52 +138,53 @@ add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript
 ##################################################################################
 
 
-# test
+# # test version with pre-existing formatting
 # workbook <- createWorkbook()
 # addWorksheet(wb = workbook, sheet = "superscript_test")
 # writeData(wb = workbook, sheet = "superscript_test", x = tibble(var1 = c(1, 2, 3), var2 = c("red", "blue", "green")))
-# row <- 3
+# test_style_1 <- createStyle(fontName = "Source Sans Pro", fontSize = 14, fontColour = "#ffffff", fgFill = "#1F497D", numFmt = "GENERAL",
+#                           border = "top_bottom_left_right", borderColour = "#ffffff", borderStyle = "thick",
+#                           halign = "center", valign = "center", textDecoration = "bold", wrapText = TRUE)
+# addStyle(wb = workbook, sheet = "superscript_test", style = test_style_1, 
+#          rows = 1:3, cols = 1:2, gridExpand = TRUE, stack = TRUE)
+# test_style_2 <- createStyle(fontName = "Arial", fontColour = "#00cc00", halign = "left", textDecoration = "italic",
+#                             border = "right", borderColour = "#ff0000", borderStyle = "dashed")
+# addStyle(wb = workbook, sheet = "superscript_test", style = test_style_2, rows = 2, cols = 2, gridExpand = TRUE, stack = TRUE)
+# 
+# # inspect
+# openXL(workbook)
+# workbook
+# workbook$sharedStrings
+# workbook$styleObjects
+# 
+# # set args
+# row <- 2
 # col <- 2
 # sheet <- "superscript_test"
-# position <- 3
 # text <- "green_w_superscript"
-# is_superscript <- TRUE
+# superscript_position <- 5
 # superscript_text <- "a"
-# size = 11
-# color = "#000000"
-# font = "Calibri"
-# font_family = 1
-# bold = FALSE
-# italic = FALSE
-# underlined = FALSE
 # 
-# openXL(workbook)
-# workbook
-# workbook$sharedStrings
 # 
-# # note position = 1 actually places superscript text starting at position 2 of text for some reason
-# # so the best i can do is text = " text here" with a leading space, and then use position = 1
+# #########################
+# 
+# 
+# # call add_superscript_to_cell
 # add_superscript_to_cell(workbook = workbook, sheet = "superscript_test", row = row, col = col, text = text,
-#                          superscript_text = superscript_text, position = position, is_superscript = is_superscript,
-#                          size = size, color = color, font = font, font_family = font_family, bold = bold,
-#                          italic = italic, underlined = underlined)
+#                         superscript_text = superscript_text, superscript_position = position)
 # 
+# # inspect
 # workbook
 # workbook$sharedStrings
+# workbook$styleObjects
 # openXL(workbook)
 
+      
+      
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      
+      
+      
+      
+      
+      
