@@ -4,78 +4,6 @@ library(openxlsx)
 library(readxl)
 
 
-# load table_1
-setwd("C:/users/sjdevine/Work Folders/Desktop/personal_drive/R/openxlsx")
-table_1 <- read_excel(path = "example_table.xlsx", sheet = "table_1") %>% 
-        mutate(Filed = comma(Filed), Grants = comma(Grants), Grant_rate = percent(Grant_rate), Denials = comma(Denials),
-               Denial_rate = percent(Denial_rate), Closed = comma(Closed), Closed_rate = percent(Closed_rate)) %>%
-        rename("Grant rate with looooooooooong title" = Grant_rate, "Denial rate\nwith\nlots\nof\nlinebreaks" = Denial_rate, "Closed rate" = Closed_rate, "Example text" = Example_text)
-table_1
-
-# load table_2
-table_2 <- read_excel(path = "example_table.xlsx", sheet = "table_2") %>% 
-        mutate(Filed = comma(Filed), Grants = comma(Grants), Grant_rate = percent(Grant_rate), Denials = comma(Denials),
-               Denial_rate = percent(Denial_rate), Closed = comma(Closed), Closed_rate = percent(Closed_rate)) %>%
-        rename("Grant rate" = Grant_rate, "Denial rate" = Denial_rate, "Closed rate" = Closed_rate, "Example text" = Example_text)
-table_2
-
-
-######################################################################################################################################
-######################################################################################################################################
-######################################################################################################################################
-
-
-# create superscript_table
-superscript_table_1 <- tibble(section = c("header", "body", "footnote"), row = c(1, 5, 1), col = c(2, 3, 1), 
-                              superscript_text = c("1", "*", "a"), superscript_position = c(6, 2, 1), 
-                              prior_text = c("Filed", "200,000", "This is footnote 1 for table 1."))
-superscript_table_2 <- tibble(section = c("header", "body", "footnote"), row = c(1, 5, 1), col = c(2, 3, 1),
-                              superscript_text = c("1", "*", "a"), superscript_position = c(6, 2, 1),  
-                              prior_text = c("Filed", "200,000", "This is footnote 1 for table 2."))
-superscript_table <- list(superscript_table_1, superscript_table_2)
-superscript_table
-
-
-#########################
-
-
-# create footnote_table
-footnote_table_1 <- tibble(text = c("This is footnote 1 for table 1.", str_c("This is footnote 2 - it is long",
-                                                                             "long long long long long long long long long long long long long long",
-                                                                             "long long long long long long long long long long long long long long",
-                                                                             "long long long long long long long long long long long long long long",
-                                                                             "long long long long long long long long long long long long long long")))
-footnote_table_2 <- tibble(text = c("This is footnote 1 for table 2.", str_c("This is footnote 2 - it is reallllllllllllllll",
-                                                              "llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllly long")))
-footnote_table <- list(footnote_table_1, footnote_table_2)
-footnote_table 
-
-
-#######################
-
-
-# create style_table
-style_table_1 <- tibble(row_type = c("header", "body", "body", "footnote"), rows_from = c(1, 1, 4, 1), rows_to = c(1, 3, 7, 1), 
-                        cols_from = c(1, 1, 1, 1), cols_to = c(1, 2, ncol(table_1), 1),
-                      font_name = c("Arial", "Arial", NA, "Arial"), font_size = c(NA, 15, 7, NA), font_color = c(NA, "#cc0099", NA, NA),
-                      border = c(NA, "top_bottom_left_right", NA, NA), border_color = c(NA, "#ff0000", NA, NA),
-                      border_style = c(NA, "thick", NA, NA), background_fill = c(NA, "#66ff66", NA, NA),
-                      horizontal_alignment = c("right", "left", NA, "right"), vertical_alignment = c(NA, "top", NA, NA),
-                      text_decoration = c(NA, "bold", NA, NA), wrap_text = c(FALSE, TRUE, NA, NA),
-                      text_rotation = c(45, NA, NA, NA))
-
-style_table_2 <- tibble(row_type = c("header", "body", "body", "footnote"), rows_from = c(1, 1, 4, 1), rows_to = c(1, 3, 7, 1), 
-                        cols_from = c(1, 1, 1, 1), cols_to = c(1, 2, ncol(table_1), 1),
-                        font_name = c("Arial", "Arial", NA, "Arial"), font_size = c(NA, 15, 7, NA), font_color = c(NA, "#cc0099", NA, NA),
-                        border = c(NA, "blah_top_blah_bottom_blah_right", NA, NA), border_color = c(NA, "#ff0000", NA, NA),
-                        border_style = c(NA, "thick", NA, NA), background_fill = c(NA, "#66ff66", NA, NA),
-                        horizontal_alignment = c("right", "left", NA, "right"), vertical_alignment = c(NA, "top", NA, NA),
-                        text_decoration = c(NA, "bold", NA, NA), wrap_text = c(FALSE, TRUE, NA, NA),
-                        text_rotation = c(45, NA, NA, NA))
-
-style_table <- list(style_table_1, style_table_2)
-
-
 ######################################################################################################################################
 ######################################################################################################################################
 ######################################################################################################################################
@@ -972,75 +900,123 @@ prd_format <- function(workbook, tables, output_sheet_names = NULL, text_cols = 
 ###########################################################################################################################
 
 
-# inspect workbook
-openXL(workbook)
-
-
-# test
-text_cols <- list(c(9), c(2))
-summary_rows <- NULL
-summary_cols <- NULL
-tables <- list(table_1, table_2)
-output_sheet_names <- c("table_1", "table_2")
-col_width_padding <- 1
-min_col_width <- c(8.43, 8.43)
-custom_row_height <- NULL
-# custom_row_height = list(c(40, rep(15, times = nrow(table_1)), 15, 25), c(50, rep(15, times = nrow(table_1)), 15, 25))
-custom_col_width <- NULL
-# custom_col_width = list(c(8, NA, 10, 10, 10, 10, 10, 10, 12))
-
-
-workbook <- createWorkbook()
-current_output_sheet_name <- output_sheet_names[[1]]
-current_table <- tables[[1]]
-current_col_width_padding <- col_width_padding[[1]]        
-current_min_col_width <- min_col_width[[1]]
-current_text_cols <- text_cols[[1]]
-current_font_size <- 10
-current_summary_rows <- summary_rows[[1]]
-current_summary_cols <- summary_cols[[1]]
-current_custom_col_width <- custom_col_width[[1]]
-current_custom_row_height <- custom_row_height[[1]]
-# current_style_table <- style_table[[1]]
-current_style_table <- NULL
-current_footnote_table <- footnote_table[[1]]
-current_superscript_table <- superscript_table[[1]]
-
-
-########################
-
+# create add_superscript_to_cell function
+add_superscript_to_cell <- function(workbook, sheet, row, col, text, superscript_text, superscript_position) {
         
-# output single table        
-workbook <- createWorkbook() %>% prd_format(tables = table_1, output_sheet_names = NULL, 
-           text_cols = 9, font_size = 10, custom_col_width = NULL, custom_row_height = NULL, 
-           style_table = NULL, footnote_table = NULL, superscript_table = NULL, 
-           col_width_padding = 1, min_col_width = 8.43, overwrite = TRUE)
-openXL(workbook)
-saveWorkbook(wb = workbook, file = "example_table_output.xlsx", overwrite = TRUE)
-
-# output multiple tables, increased col_width_padding    
-previous_workbook <- loadWorkbook(file = "example_table_output.xlsx")
-openXL(previous_workbook)
-prd_format(workbook = previous_workbook, tables = list(table_1, table_2), output_sheet_names = "table_1_sheet", 
-           text_cols = list(9, 2), font_size = 9, custom_col_width = NULL, custom_row_height = NULL, 
-           style_table = NULL, footnote_table = NULL, superscript_table = NULL, 
-           col_width_padding = c(1, 4), min_col_width = 8.43, overwrite = TRUE) %>% openXL()
-
-# output multiple tables w/ custom_col_width and custom_row_height, style_table  
-createWorkbook() %>% prd_format(tables = list(table_1, table_2), output_sheet_names = c("table_1_sheet", "table_2_sheet"), 
-           style_table = style_table, footnote_table = footnote_table, superscript_table = superscript_table, 
-           text_cols = list(c(9), c(2, 5)), font_size = 10, 
-           custom_col_width = list(c(8, NA, 10, NA, 10, 10, 10, 10, 12), c(12, 10, 10, 10, 10, 10, 10, 10, 8)), 
-           custom_row_height = list(c(NA, rep(15, times = nrow(table_1))), c(50, rep(15, times = nrow(table_1)), 15, 25)), 
-           col_width_padding = 1, min_col_width = 8.43, overwrite = TRUE) %>% openXL()
-
-# with summary_rows/cols, with footnote table as a single tibble, not a list
-createWorkbook() %>% prd_format(tables = list(table_1, table_2), output_sheet_names = c("table_1_sheet", "table_2_sheet"), 
-           summary_rows = list(10, NULL), summary_cols = list(NULL, 9), 
-           style_table = NULL, footnote_table = footnote_table[[1]], superscript_table = superscript_table[[1]],
-           text_cols = list(9, 2), font_size = 10, 
-           custom_col_width = list(c(8, 10, 10, 10, 10, 10, 10, 10, 12), c(12, 10, 10, 10, 10, 10, 10, 10, 8)), 
-           custom_row_height = list(c(40, rep(15, times = nrow(table_1))), c(50, rep(15, times = nrow(table_1)), 15, 25)), 
-           col_width_padding = 1, min_col_width = 8.43, overwrite = TRUE) %>% openXL()
-
-
+        # create placeholder_text
+        placeholder_text <- 'This is placeholder text that should not appear anywhere in your document.'
+        
+        # add placeholder_text to workbook in specified cell that will contain superscript
+        writeData(wb = workbook, sheet = sheet, x = placeholder_text, startRow = row, startCol = col)
+        
+        # find the workbook$sharedstring that you want to update
+        shared_string_to_update <- workbook$sharedStrings %>% enframe() %>% unnest(value) %>%
+                filter(str_detect(string = value, pattern = placeholder_text)) %>% pull(name)
+        
+        # get pre_text before superscript
+        # note that blanks must be replaced with a space, because blanks will cause error when compiling into xml
+        pre_text <- str_sub(string = text, start = 1, end = superscript_position - 1) 
+        pre_text <- ifelse(pre_text == "", " ", pre_text)
+        
+        # get post_text after superscript
+        # note that blanks must be replaced with a space, because blanks will cause error when compiling into xml
+        post_text <- str_sub(string = text, start = superscript_position, end = nchar(text)) 
+        post_text <- ifelse(post_text == "", " ", post_text)
+        
+        
+        #############
+        
+        
+        # create get_style_tbl function
+        get_style_tbl <- function(current_style_object, current_style_index) {
+                
+                # get style info
+                font_color <- ifelse(is.null(current_style_object$style$fontColour$rgb), NA, current_style_object$style$fontColour$rgb)
+                font_name <- ifelse(is.null(current_style_object$style$fontName$val), NA, current_style_object$style$fontName$val)
+                font_size <- ifelse(is.null(current_style_object$style$fontSize$val), NA, current_style_object$style$fontSize$val)
+                text_decoration <- ifelse(is.null(current_style_object$style$fontDecoration), NA, current_style_object$style$fontDecoration)
+                text_decoration <- ifelse(length(text_decoration) > 1, 
+                                          str_c(text_decoration, collapse = ", "), text_decoration)
+                sheet <- current_style_object$sheet
+                rows <- current_style_object$rows
+                cols <- current_style_object$cols
+                
+                # get and return current_style_object_tbl
+                current_style_object_tbl <- tibble(style_index = rep(current_style_index, times = length(rows)), 
+                                                   style_sheet = rep(sheet, times = length(rows)), style_row = rows, style_col = cols, 
+                                                   font_color = rep(font_color, times = length(rows)), 
+                                                   font_name = rep(font_name, times = length(rows)), 
+                                                   font_size = rep(font_size, times = length(rows)),
+                                                   text_decoration = rep(text_decoration, times = length(rows))) %>%
+                        mutate(text_decoration = case_when(text_decoration == "BOLD" ~ "<b/>",
+                                                           text_decoration == "ITALIC" ~ "<i/>",
+                                                           str_detect(string = text_decoration, pattern = "BOLD") & 
+                                                                   str_detect(string = text_decoration, pattern = "ITALIC") ~ "<b/><i/>",
+                                                           TRUE ~ text_decoration))
+                return(current_style_object_tbl)                                   
+        }
+        
+        # get style_tbl
+        style_tbl <- map2(.x = workbook$styleObjects, .y = 1:length(workbook$styleObjects), 
+                          .f = ~ get_style_tbl(current_style_object = .x, current_style_index = .y)) %>%
+                bind_rows()
+        
+        # get target_cell_style_tbl, filtering down style_tbl to current row/col targeted for superscript, and creating xml property strings
+        target_cell_style_tbl <- style_tbl %>% filter(style_sheet == sheet, style_row == row, style_col == col) %>%
+                arrange(desc(style_index)) %>% slice(1) %>% 
+                mutate(font_color = case_when(is.na(font_color) ~ "", !is.na(font_color) ~ str_c('<color rgb =\"', font_color, '\"/>')),
+                       font_name = case_when(is.na(font_name) ~ "", !is.na(font_name) ~ str_c('<rFont val =\"', font_name, '\"/>')),
+                       font_size = case_when(is.na(font_size) ~ "", !is.na(font_size) ~ str_c('<sz val=\"', font_size, '\"/>')),
+                       text_decoration = case_when(is.na(text_decoration) ~ "", TRUE ~ text_decoration))
+        
+        
+        ##############
+        
+        
+        new_shared_string <- str_c('<si>',
+                                   
+                                   # handle pre-text
+                                   '<r>',
+                                   '<rPr>',
+                                   target_cell_style_tbl %>% pull(text_decoration),
+                                   target_cell_style_tbl %>% pull(font_size),
+                                   target_cell_style_tbl %>% pull(font_color),
+                                   target_cell_style_tbl %>% pull(font_name),
+                                   '</rPr>',
+                                   '<t xml:space="preserve">',
+                                   pre_text,
+                                   '</t>',
+                                   '</r>',
+                                   
+                                   # handle superscript_text
+                                   '<r>',
+                                   '<rPr>',
+                                   '<vertAlign val=\"superscript\"/>',
+                                   target_cell_style_tbl %>% pull(text_decoration),
+                                   target_cell_style_tbl %>% pull(font_size),
+                                   target_cell_style_tbl %>% pull(font_color),
+                                   target_cell_style_tbl %>% pull(font_name),
+                                   '</rPr>',
+                                   '<t xml:space="preserve">',
+                                   superscript_text,
+                                   '</t>',
+                                   '</r>',
+                                   
+                                   # handle post-text
+                                   '<r>',
+                                   '<rPr>',
+                                   target_cell_style_tbl %>% pull(text_decoration),
+                                   target_cell_style_tbl %>% pull(font_size),
+                                   target_cell_style_tbl %>% pull(font_color),
+                                   target_cell_style_tbl %>% pull(font_name),
+                                   '</rPr>',
+                                   '<t xml:space="preserve">',
+                                   post_text,
+                                   '</t>',
+                                   '</r>',
+                                   '</si>',
+                                   sep = "")
+        
+        # update sharedStrings with new_shared_string
+        workbook$sharedStrings[shared_string_to_update] <- new_shared_string
+}
